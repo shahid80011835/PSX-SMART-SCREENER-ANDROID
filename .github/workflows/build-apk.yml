@@ -19,7 +19,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Gradle Wrapper Automatically
+      - name: Setup Gradle and Build APK
         run: |
           # پروجیکٹ میں build.gradle فائل تلاش کریں
           GRADLE_FILE=$(find . -name "build.gradle" -o -name "build.gradle.kts" -not -path "*/.*" | head -n 1)
@@ -31,20 +31,17 @@ jobs:
           echo "Found project directory at: $PROJECT_DIR"
           cd "$PROJECT_DIR"
 
-          # اگر gradlew نہ ملے تو اسے خود بخود بنا لیں
+          # اگر gradlew نہ ملے تو جدید ترین Gradle ڈاون لوڈ کر کے ریپر بنا لیں
           if [ ! -f gradlew ]; then
-            echo "gradlew is missing. Generating it automatically..."
-            sudo apt-get update && sudo apt-get install -y gradle
-            gradle wrapper
+            echo "gradlew is missing. Downloading Gradle 8.5..."
+            wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip
+            unzip -q gradle-8.5-bin.zip
+            ./gradle-8.5/bin/gradle wrapper
           fi
 
           chmod +x gradlew
-          echo "BUILD_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-
-      - name: Build Android APK with Gradle
-        run: |
-          cd "$BUILD_DIR"
-          ./gradlew assembleDebug --no-daemon
+          echo "Building APK..."
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
