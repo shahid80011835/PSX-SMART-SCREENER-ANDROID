@@ -19,9 +19,13 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Gradle and Build APK
+      - name: Setup Android SDK and Build APK
         run: |
-          # پروجیکٹ میں build.gradle فائل تلاش کریں
+          # GitHub رنر پر پہلے سے موجود Android SDK کا راستہ سیٹ کریں
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools
+
+          # پروجیکٹ میں build.gradle تلاش کریں
           GRADLE_FILE=$(find . -name "build.gradle" -o -name "build.gradle.kts" -not -path "*/.*" | head -n 1)
           if [ -z "$GRADLE_FILE" ]; then
             echo "ERROR: build.gradle not found!"
@@ -31,7 +35,10 @@ jobs:
           echo "Found project directory at: $PROJECT_DIR"
           cd "$PROJECT_DIR"
 
-          # اگر gradlew نہ ملے تو جدید ترین Gradle ڈاون لوڈ کر کے ریپر بنا لیں
+          # اینڈرائیڈ ایس ڈی کے لائسنس خود بخود قبول کریں
+          yes | sdkmanager --licenses || true
+
+          # اگر gradlew نہ ملے تو Gradle 8.5 ڈاؤن لوڈ کر کے ریپر بنا لیں
           if [ ! -f gradlew ]; then
             echo "gradlew is missing. Downloading Gradle 8.5..."
             wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip
@@ -41,7 +48,7 @@ jobs:
 
           chmod +x gradlew
           echo "Building APK..."
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          ./gradlew assembleDebug --no-daemon --info
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
