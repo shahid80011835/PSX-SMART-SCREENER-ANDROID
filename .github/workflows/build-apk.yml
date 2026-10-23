@@ -1,50 +1,49 @@
 name: Build PSX Smart Screener APK
 
 on:
-workflow_dispatch:
-push:
-paths:
-- ".github/workflows/build-apk.yml"
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/build-apk.yml"
 
 jobs:
-build:
-runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
 
-  - name: Set up Java
-    uses: actions/setup-java@v5
-    with:
-      distribution: temurin
-      java-version: "17"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
 
-  - name: Set up Android SDK
-    uses: android-actions/setup-android@v3
-    with:
-      accept-android-sdk-licenses: true
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
 
-  - name: Accept Android SDK licenses
-    run: yes | sdkmanager --licenses || true
+      - name: Check Android project files
+        run: |
+          echo "Checking project files..."
+          ls -la
+          if [ ! -f gradlew ]; then
+            echo "ERROR: gradlew is missing from the repository root."
+            echo "The Android project must include its Gradle wrapper."
+            exit 1
+          fi
+          chmod +x gradlew
 
-  - name: Check Android project files
-    run: |
-      echo "Checking project files..."
-      ls -la
-      if [ ! -f gradlew ]; then
-        echo "ERROR: gradlew is missing from the repository root."
-        echo "The Android project must include its Gradle wrapper."
-        exit 1
-      fi
-      chmod +x gradlew
+      - name: Build Android APK
+        run: ./gradlew assembleDebug --no-daemon
 
-  - name: Build Android APK
-    run: ./gradlew assembleDebug --no-daemon
-
-  - name: Upload APK
-    uses: actions/upload-artifact@v4
-    with:
-      name: PSX-Smart-Screener-APK
-      path: app/build/outputs/apk/debug/*.apk
-      if-no-files-found: error
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PSX-Smart-Screener-APK
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
