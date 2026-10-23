@@ -38,7 +38,7 @@ jobs:
           # اینڈرائیڈ ایس ڈی کے لائسنس خود بخود قبول کریں
           yes | sdkmanager --licenses || true
 
-          # اگر gradlew نہ ملے تو Gradle 8.5 ڈاؤن لوڈ کر کے ریپر بنا لیں
+          # اگر gradlew نہ ملے تو Gradle ڈاؤن لوڈ کر کے ریپر بنا لیں
           if [ ! -f gradlew ]; then
             echo "gradlew is missing. Downloading Gradle 8.5..."
             wget -q https://services.gradle.org/distributions/gradle-8.5-bin.zip
@@ -47,8 +47,8 @@ jobs:
           fi
 
           chmod +x gradlew
-          echo "Building APK..."
-          ./gradlew assembleDebug --no-daemon --info
+          echo "Building APK with full stacktrace..."
+          ./gradlew assembleDebug --no-daemon --stacktrace --info
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
