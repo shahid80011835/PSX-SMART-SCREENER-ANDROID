@@ -19,20 +19,27 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Locate and Grant execute permission for gradlew
+      - name: Setup Gradle Wrapper Automatically
         run: |
-          # پروجیکٹ میں gradlew فائل کو خود بخود تلاش کریں
-          GRADLEW_PATH=$(find . -name "gradlew" -type f)
-          if [ -z "$GRADLEW_PATH" ]; then
-            echo "ERROR: gradlew file not found in the repository!"
+          # پروجیکٹ میں build.gradle فائل تلاش کریں
+          GRADLE_FILE=$(find . -name "build.gradle" -o -name "build.gradle.kts" -not -path "*/.*" | head -n 1)
+          if [ -z "$GRADLE_FILE" ]; then
+            echo "ERROR: build.gradle not found!"
             exit 1
           fi
-          echo "Found gradlew at: $GRADLEW_PATH"
-          chmod +x "$GRADLEW_PATH"
-          
-          # اس فولڈر کا راستہ محفوظ کریں جہاں gradlew موجود ہے
-          DIR_PATH=$(dirname "$GRADLEW_PATH")
-          echo "BUILD_DIR=$DIR_PATH" >> $GITHUB_ENV
+          PROJECT_DIR=$(dirname "$GRADLE_FILE")
+          echo "Found project directory at: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+
+          # اگر gradlew نہ ملے تو اسے خود بخود بنا لیں
+          if [ ! -f gradlew ]; then
+            echo "gradlew is missing. Generating it automatically..."
+            sudo apt-get update && sudo apt-get install -y gradle
+            gradle wrapper
+          fi
+
+          chmod +x gradlew
+          echo "BUILD_DIR=$PROJECT_DIR" >> $GITHUB_ENV
 
       - name: Build Android APK with Gradle
         run: |
